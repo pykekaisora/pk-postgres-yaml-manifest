@@ -23,3 +23,9 @@ Need some suggestions to make it better for deployment.
 
 ## How to End?
 1. `$ kubectl delete -f full-postgres.yaml`
+
+## Workflow
+1. Using [PK Rancher Server](), type `$ docker exec -it rancher-web bash` to log into your container.
+2. Download it and put into `/var/lib/rancher/kubemani/postgres`.
+3. Change Directory to `/var/lib/rancher/kubemani/postgres`.
+4. Follow the [guide above](#how-to-use).
