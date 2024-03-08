@@ -1,0 +1,100 @@
+##Start of ConfigMap##
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: postgres-config
+  labels: 
+    app: postgres
+data:
+  POSTGRES_DB: testdb
+  POSTGRES_USER: admin
+  POSTGRES_PASSWORD: mySecurePassword
+##End of ConfigMap##
+
+---
+
+##Start of Storage##
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: postgres-pv-volume
+  labels:
+    type: local
+    app: postgres
+spec:
+  storageClassName: manual
+  capacity:
+    storage: 5Gi
+  accessModes: 
+    - ReadWriteMany
+  hostPath:
+    path: "/var/lib/rancher/kubedata/postgres"
+
+---
+
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: postgres-pv-claim
+  labels:
+    app: postgres
+spec:
+  storageClassName: manual
+  accessModes: 
+  - ReadWriteMany
+  resources:
+    requests:
+      storage: 5Gi
+##End of Storage##
+
+---
+
+##Start of Deployment##
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: postgres
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: postgres
+  template:
+    metadata:
+      labels:
+        app: postgres
+    spec:
+      containers:
+        - name: postgres
+          image: postgres:latest
+          imagePullPolicy: "IfNotPresent"
+          ports:
+            - containerPort: 5432
+          envFrom:
+            - configMapRef:
+                name: postgres-config
+          volumeMounts:
+            - mountPath: /var/lib/postgresql
+              name: postgresdb
+      volumes:
+        - name: postgresdb
+          persistentVolumeClaim:
+            claimName: postgres-pv-claim
+##End of Deployment##
+
+---
+
+##Start Of Service##
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres
+  labels:
+    app: postgres
+spec:
+  type: NodePort
+  ports:
+    - port: 5432
+  selector:
+    app: postgres
+##End of Service##
